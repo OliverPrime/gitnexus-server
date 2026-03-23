@@ -16,7 +16,9 @@ COPY vendor ./vendor
 RUN npm ci
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM node:20-slim
+# node:20-noble = Ubuntu 24.04 (GLIBC 2.39) — required for @ladybugdb/core prebuilt
+# which needs GLIBC_2.38. node:20-slim (Debian Bookworm) only has GLIBC 2.36.
+FROM node:20-noble
 
 # Runtime: git for cloning MRCH on startup
 RUN apt-get update && apt-get install -y --no-install-recommends \

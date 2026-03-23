@@ -9,26 +9,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /build
 
 COPY package*.json ./
+COPY scripts ./scripts
 RUN npm ci
 
 COPY tsconfig*.json ./
 COPY src ./src
-COPY scripts ./scripts
 COPY vendor ./vendor
 RUN npm run build
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM node:20-slim
 
-# Runtime: git (clone on start) + libs for native .node addons
+# Runtime: git for cloning MRCH on startup
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git ca-certificates python3 make g++ cmake \
+    git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+
+# Copy compiled node_modules (with native addons already built) from builder
+COPY --from=builder /build/node_modules ./node_modules
 
 # Copy compiled CLI + vendor
 COPY --from=builder /build/dist ./dist

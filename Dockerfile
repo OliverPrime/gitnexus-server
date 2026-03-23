@@ -13,12 +13,14 @@ COPY scripts ./scripts
 COPY tsconfig*.json ./
 COPY src ./src
 COPY vendor ./vendor
-RUN npm ci
+
+# npm ci downloads prebuilt @ladybugdb/core binary (requires GLIBC 2.38).
+# npm rebuild recompiles all native addons from source against this image's
+# GLIBC 2.36, producing a binary that runs on the same node:20-slim runtime.
+RUN npm ci && npm rebuild
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-# node:20-noble = Ubuntu 24.04 (GLIBC 2.39) — required for @ladybugdb/core prebuilt
-# which needs GLIBC_2.38. node:20-slim (Debian Bookworm) only has GLIBC 2.36.
-FROM node:20-noble
+FROM node:20-slim
 
 # Runtime: git for cloning MRCH on startup
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -29,7 +31,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-# Copy compiled node_modules (with native addons already built) from builder
+# Copy compiled node_modules (with native addons rebuilt from source) from builder
 COPY --from=builder /build/node_modules ./node_modules
 
 # Copy compiled CLI + vendor

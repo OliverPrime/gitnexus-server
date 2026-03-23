@@ -10,12 +10,12 @@ WORKDIR /build
 
 COPY package*.json ./
 COPY scripts ./scripts
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY tsconfig*.json ./
 COPY src ./src
 COPY vendor ./vendor
-RUN npm run build
+RUN node scripts/patch-tree-sitter-swift.cjs && npm run build
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM node:20-slim

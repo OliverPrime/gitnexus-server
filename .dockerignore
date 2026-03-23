@@ -1,0 +1,8 @@
+node_modules
+dist
+.gitnexus
+test
+eval
+*.test.ts
+*.md
+.git

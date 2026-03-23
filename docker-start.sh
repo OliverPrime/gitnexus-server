@@ -12,8 +12,12 @@ else
   git clone --depth=1 "https://${GITHUB_TOKEN}@github.com/${MRCH_REPO}.git" "$REPO_DIR"
 fi
 
-echo "==> Re-indexing MRCH with GitNexus..."
-node /app/dist/cli/index.js analyze "$REPO_DIR"
-
 echo "==> Starting GitNexus server on port $PORT..."
-exec node /app/dist/cli/index.js serve --host 0.0.0.0 --port "$PORT"
+node /app/dist/cli/index.js serve --host 0.0.0.0 --port "$PORT" &
+SERVER_PID=$!
+
+echo "==> Re-indexing MRCH in background..."
+node /app/dist/cli/index.js analyze "$REPO_DIR" && echo "==> Index complete." &
+
+# Wait for server process — if it dies, exit so Railway restarts
+wait $SERVER_PID
